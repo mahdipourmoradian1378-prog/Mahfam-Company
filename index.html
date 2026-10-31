@@ -7,7 +7,7 @@
 <meta name="description" content="کاتالوگ تعاملی شرکت مهفام؛ طراحی گرافیک، عکاسی و فیلم‌برداری">
 <meta name="theme-color" content="#0a1840">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a1840'/%3E%3Cpath d='M16 46V18l16 16 16-16v28' fill='none' stroke='%23d9b660' stroke-width='5' stroke-linejoin='round'/%3E%3C/svg%3E">
-<link rel="preload" as="image" href="pages-m/p-01.webp" media="(max-width: 819px)">
+<link rel="preload" as="image" type="image/avif" href="pages-m/p-01.avif" media="(max-width: 819px)">
 <link rel="preload" as="image" href="pages/p-01.jpg" media="(min-width: 820px)">
 <style>
   :root {
@@ -83,6 +83,9 @@
     box-shadow: 0 0 22px rgba(0,0,0,.35);
     transition: transform .38s cubic-bezier(.3,.1,.2,1);
   }
+  .sp { background-size: cover; background-position: center; }
+  .sp img { opacity: 0; transition: opacity .25s ease; }
+  .sp img.ok { opacity: 1; }
   .sp.gone { transform: translate3d(104%, 0, 0); }
   .sp.now  { transform: translate3d(0, 0, 0); }
   .sp.instant { transition: none; }
@@ -223,7 +226,10 @@
   }
 
   /* ---------- build ---------- */
-  var SMALL = function (n) { return "pages-m/p-" + (n < 10 ? "0" + n : n) + ".webp"; };
+  var EXT = "webp";
+  var LQ = ["data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAABwAwCdASoYABgAPwF4s1QrJySjKAgBYCAJZwDLLBEcykM5NQAA/uvKgS5z02HeLV2+WSs1+DD9K6ZyJs6pXHa8NkYhVcfKmRAAAA==", "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAACQAwCdASoYABgAPwF0rlKrJqQiqAqpYCAJZQDE2BEcyxthpDEAAP7ryoL4kofGw1E1DU8x3FStqWtqX++qATFNarIfuRvsFvKKQF9t8L6xl5QDAAA=", "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAABwAwCdASoYABgAPwF2slOrJySiqAgBYCAJaQAAPZbjq0hlLcAA/vAzg4jrfdP4ic31IvqB+YFYRQaYF/71lLv6AAA=", "data:image/webp;base64,UklGRtoAAABXRUJQVlA4IM4AAACQBQCdASoYABgAPwF2slQrJySjKAgBYCAJQBOmYwXoJn0MBmT8kj2sihMudT5DfCdju3UEcAD+7oetVOjPpxdf2JNo6bZBAN34nRpJDWpR9qv2Zudib7a6A0KoQPRhLKsh6M/ahvncv3oK0QHYhpur0vdxPG8NV6rAgHGOVcb45OR9bSqfaKn2+vPmbLity/o+z0jOtf6RvtRQ5iqn2+yYz3ulUDHSEEsahbQskMvNNV59F5+9DqLvvWbYGlkKD8y9N/4iqUKXCPnY7Tu4AA==", "data:image/webp;base64,UklGRoYAAABXRUJQVlA4IHoAAAAwBACdASoYABgAPwFysFIrJqSiqAqpYCAJQBb3AiRNdfgwx0rv52XdqAAA/u9jCw4zHhKNJvCus4zWairf0q46iOO4pW04w3BCnJf+40/u2jnCFX45u48WxvE7/laslaagq43tXtNEXUY2jTwuvofkwfFC0UpDXD+AAA==", "data:image/webp;base64,UklGRn4AAABXRUJQVlA4IHIAAACQBACdASoYABgAPwF2s1OrJySiqAgBYCAJZQDKABEc8iap0nX/wYNrE/QJ0AAA/uvPX9Ae/Uw0MNewt8DP5kT6AwEB+8KceJ8pty9RieP0Vngljbf2qj6Prm2u1+Vghqg6Oy5ItgMGV7R0d5KcSoAAAAA=", "data:image/webp;base64,UklGRuYAAABXRUJQVlA4INoAAADwBQCdASoYABgAPwFwrVCrJiQiqA1RYCAJbACdMoR11zW2jAbFsgmoCad5t2z6MNCR/Gv6RA1YgAD+zCz2hJgLuxkzgZ+T+QeeAhhyOiQ2WumTfYR/bl0vbkRzDu3Yni9vhW0xVrpWjwtiKAIVta3dV767GWeKcvIU2my5Hsz/X+z8tyNBZrdL1sqafhl4BmoKGnAkyaD0jufle7SSwJnSS9JIl8xxlmc1inLMaf231xFnm+ebJk5q1ijo/LTjaaC1Dx+aHPZr8wU3GuLVFxpq4RcFuRLIMjuAAA==", "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAABwAwCdASoYABgAPwFurlCrJiQiqA1RYCAJZwDGfBX0jTdhxAAA/u921gmmx909GoWmpi7SWPD7/WRxCCMPwEAAAAA=", "data:image/webp;base64,UklGRu4AAABXRUJQVlA4IOIAAADQBQCdASoYABgAPwFwrFErJiQiqA1RYCAJQBgbsZUOKZvcfkolmTdgYhFvFkjNPtaY3RKy3mMAAP7hcSUNbfdQUhMoCnNwViMSBOVbN1cAi4ZrF/bj0JrjfRrzJXdYvqwtoM+f+ee+ruI4qkbS+6p5bloJZMH/h5x3N8eqh0euStLeOI/H98V7xa9qNVeBhtfNakXoiKWR6yFXSkB3m5nshyH3sBNRDE90VPW+zRMdRWLcU0Aic+/V49AznmGNubQau149W2iB7GiOXKZPHcO+jmInxyiTbjU2GkNewFJnqYAA", "data:image/webp;base64,UklGRp4AAABXRUJQVlA4IJIAAADQBACdASoYABgAPwFur1ErJiQisBgIAWAgCWMAsR9MQamStFInbwEzUJ+EMvylAAD+69fCU1ZUaeXGf5MqTw74zYh7ikbd2xnT+PsEyrx0xs/yB1stogw7ObPbXtomRGeZEBSsTbmXbUBufaCVzdIGZ5vtVniODB7Jx5rneFrAkczYaREOS7o2UUa915GzAAAAAA==", "data:image/webp;base64,UklGRpQAAABXRUJQVlA4IIgAAADwAwCdASoYABgAPwFssFErJaSisBgIAWAgCWUAvVgQ5Ol5xk/tNc7gAP7r2M/4O0xQfxYohQVsLLAOBhd2/bB3t0WNSz767r0BDmiPsU4R9tCyyh1klwq27oh8Dja2qTxgIK0/JIe3gOIyfLzm6gMFNj75Elj4qYGnoPix9+0Ml9+CVmDMAAAA", "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAADQAwCdASoYABgAPuFYo06opSMiN+gBEBwJaQAAiOZT/i5l4tZhugAA/vTJXTLVSACphJtiAG3CqRc5+2r0bGAKMfkAAAAA", "data:image/webp;base64,UklGRsAAAABXRUJQVlA4ILQAAAAQBQCdASoYABgAPwF2s1QrJySjKAgBYCAJYwC2FAufv1rGJYuL+7GzhZElkndlskrAAP5BFTDMYV+wgipb8LmAlz1ytx5q5hMJjezxkEmTXYySt5xxaHKMvFjHkK5g2hGbXcur5/Z720coYQKmPcVrzYGabSuaxZXLO+5gbFZqJgbSPsv4LBI9o0TN8HTozdnEivcG++ln4I9Mhu+2HxsQF1VRu7XXdpC75i+bApPBZW+4IAA=", "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAADwAwCdASoYABgAPwFysFCrJySisBgIAWAgCWkAAJ7opAhQp2Fg9DMAAP7wrMDubbOhm8i7UsjM7wrgUYIU/jiXUd491lUOqAAAAA==", "data:image/webp;base64,UklGRtwAAABXRUJQVlA4INAAAABwBQCdASoYABgAPwF2slOrJySiqAgBYCAJQBfJO6MMev7DqbK9yOd5mQI/8FzOEGqEYA4wAOJwWdA8gnsDmePJK89k7eubNgpch2uvamsKNn46xtA58lNn6V36u3xYMu7LHu7F6Gv0oU5v95AiU5QOXnYobdoL1j4TWT+LTG707f/DoLIfGbUYCwkB71NWCnmY+EYnRAxMIVSejgIy1M3e3oZtYM3vABbSq7AH3D6o8XoJCRzkA4+MU7ZhAcBPE12zX70qifYwmQL+xBMYDAAA", "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAACQAwCdASoYABgAPwFyrk+rJyQiMAgBYCAJaQAAetFFtyKjROAAAP7v+JIyQj6PDbK5DQY9l1M2Qyq5d6xBxUsEDePUrjagUAAAAA==", "data:image/webp;base64,UklGRuYAAABXRUJQVlA4INoAAACQBQCdASoYABgAPwF4tFOrJyUiqAgBYCAJQBXhsZFO9+YwTwjV6ZOZm+o0jBISfmC7QVgwAAD+2i1HRF4I+MDsfyjzs9LITyvJZzP6Ph51NdktZV0eF9CLDTlI0wC6tUAqKsgzEHKC3gCo4iEuHb4jgyr7T8NoJwDd02KqglEGzp+ao1/9s30kil8pgOMZQ4t2WYuhoJlrGkvrKAzNV3LgAGyxa0eCczYpYREiQHXDQHF0t2geGZenLBHAjZJSY4FOpQ1WJDPxft78cZ0jNblXYk7n+XDk7J2QAA==", "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAADwAwCdASoYABgAPwFysFErJySisBgIAWAgCWkAAJ7opAhQRzGITj4AAP7wrMDuX2h4fPnSo+IDU4VxzipRbzntHv/jZ/GP9BysAAAA", "data:image/webp;base64,UklGRrgAAABXRUJQVlA4IKwAAAAQBQCdASoYABgAPv1qrE6rJiQiMBgMAWAfiWMAvkgQtgud/5g1drXPgOfVmlCuRg/AAP7w1KuIoNvsT925Q4Z7xN4FxiQMaRMyhNq/nRZIMstBwDYwTJwMsiDsvfudt20tF5kCXYjQ5QbsgTzC8oAxZXmLMKoDzLsUay5arJJ4LUB1Toozw+Qcr7MTcRQLeveZGDq+31SPj19e6DxdH4U1XrecnEjH5J4gAAAA", "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAABQBACdASoYABgAPwFusFCrJiSisBgIAWAgCWkAAI91l+zx+NF7VV4ufauAAP70yjbLQAczIjfJH5mvlchOBqpIOETy3YiaikAAAA==", "data:image/webp;base64,UklGRp4AAABXRUJQVlA4IJIAAAAQBQCdASoYABgAPwFurE8rJqQiMAgBYCAJZQC4qCHTj1f5ni2rpgNf/9vIi2WUk36AAP7o4qTucwrgoqeGkIDztHGFRm2SueI63AunG6EYgeZ5zcnLCACh0y+fTqdRUmVWJ4bg8uDKuuh7RWJVTo6WWYRrE5kzUW4qMKjjVgKaAHUFbJzuwReF2YFNJXO7/wAAAA==", "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAADwAwCdASoYABgAPwFyrlCrJyQisBgIAWAgCWkAAJ7ootuRhNj22vAAAP7wrMD6Z6PO7t9hOHJcBa8L9diNikmBLgLkHcq/jZ/GS0yIUgAAAA==", "data:image/webp;base64,UklGRr4AAABXRUJQVlA4ILIAAAAQBQCdASoYABgAPwFsr1ArJiQiqA1RYCAJYwC2FA9oBQiCLh7s1Qw7RS/x3T36pNAAAP7o8ppcx8ZaKTJQOxcieLQs3pSK1yB5zIJBm3+xhv1PlzC8VD6okvFwpYBc6RMbUh9ABkfHBzogdR9J9xxtkm6/VNZRMVIzUvDM/Qfg40to0Pb415Ici7vaI1C23VyfeI+BoeMGCv9SugMsPN3nV1GLlH6zULqCYoSP7ABeAAAA", "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAAAwBACdASoYABgAPwFuslGrJiSisBgIAWAgCWkAAI91l+ztgkGeFcmiwAAA/vTKNRmUiXX5t44bFGb6Gs+eNdGGmvY0uqNM6IAAAA==", "data:image/webp;base64,UklGRsYAAABXRUJQVlA4ILoAAAAwBQCdASoYABgAPwFyrFGrJqQiqA1RYCAJZQC+SBCYsIfYw/zJFHeIHXAZwvhkTQQYAAD+6+KXtGEEwbJAr3zzE6AkznwC3L1RjtRL8r+vc41y6tL+JUPBBgbm0VxFgRe+bxx1tV+6AOZCIqX/R9gLN++IZhqlOWgNWYloLxfqhmx2AW5TJxzs5kGdvtB1bTc5ILJ7U1L7Hl/exmLp6zeX2dCn+uzZfccFmmrzpUgByFhM11CMEkQLAAA=", "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAAAwBACdASoYABgAPwFusFCrJiSisBgIAWAgCWkAAI91l88aZzYITY4K+AAA/vTKNss/uJo4trpT+fPQGLAh/iKTOr4hPtE25j2Fop3mgAA=", "data:image/webp;base64,UklGRuAAAABXRUJQVlA4INQAAACQBACdASoYABgAPwF2s1OrJySiqAgBYCAJZQC9Wd2kNGd1G+gAakRdM6ie7AAA/uZ2qtnsPbLdUMgnPcTLGRFW2O0JHHsvBCFC02hrKCovNRQGaSi1gsYhrmNMsi8L+dNqckg+IrTyuOJ+XK+iYW1IPHo74p1eOHX9+rPxv2uIqdfsFdd1vDk6qY+CKPxX5fuEpgXK4rFPbmMoLPbDhwNA8eQniq7dz1AASU7t8mUhvT+tw8CCMVhn51rxk76TmFWrIdGacAoiZ5ivXS6YlrKv6SgAAA==", "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAADwAwCdASoYABgAPwFqsFGrJaSisBgIAWAgCWkAAI91mAT6kdHCdpIAAP72AdR+Ymg+ldXTdVZxnyhr3hOr7CcOldXq3UZpGy0CFMD8EZ6ggAAA", "data:image/webp;base64,UklGRqAAAABXRUJQVlA4IJQAAABQBQCdASoYABgAPwF2slQrJyQjKAgBYCAJYwC7ABEl5P9KWmdzDQNjplI/24VQ6Qi/aLgA/uzXNZbXhmqDxnYpq+1NNsRgjAoi2QPEwPi5OiluZgHhVDphNdS/tWzgOqkv59KjFpwHoRve3L2m1WmYgbsbvEwW5wFOXCFESGdo7HkNbZEq/3jlc/rAEbLuFDSJQAAA", "data:image/webp;base64,UklGRm4AAABXRUJQVlA4IGIAAACQBACdASoYABgAPu1gqE6ppaQiN/qoATAdiWUAzcAiIoKTm3Cr+YGk1azxFeAA/rp6bRI81pW5jClo3CWez5ATEwlgJsPGbBV4srLemvZ+UHqxWXpWHZ1YpNgtvQE4LYAAAA==", "data:image/webp;base64,UklGRtYAAABXRUJQVlA4IMoAAABQBQCdASoYABgAPwF2slOrJySiqAgBYCAJYwCy0AgAp0iYiRovYE7ULVi7kMMZUOgbGUAA/qZvRfa2kGh3VcSeMpx/EHwotHgxz+RLK39l8daTm0/4PtXXH/CFR+r6vkKNBJz39vQtrsulCA1lJDh/v9K0/8ORc8z6GaZtLVrlufcXNnVOwbFCx+00LO/OKkdGDAGQdXAtBZQEmHLHWrVOpBPadeZNFPHf+s/MmaByY3JiVo34cXAshaj4CzPPo23vMRLID6qBFSgA", "data:image/webp;base64,UklGRoQAAABXRUJQVlA4IHgAAABwBACdASoYABgAPwF0rVKrJqOiqAqpYCAJaQAAKdWvdVfRwBjVjomwe7KAAAD+79eQx4dH6OG0h4KiCuAbI8drQCb9FCa8T6w+EYqNs6sIFrTrf/mSN+47VroDEmQ39gpqKfsF1alY6GWuHlw/jRKadbDfr1L0cAA=", "data:image/webp;base64,UklGRpgAAABXRUJQVlA4IIwAAACQBACdASoYABgAPwF4s1QrJySjKAgBYCAJaQAALoSBwy697edoKeM3MkXILAAA/u/RPHn5wgyny7SL3Y9O3Wcm2Bfq9y+LCwHqbxnxV+R7RLZb5hG/fYpnOkscpxoWMS5tSmDZTMfpZa1ReylJBHkC2TbR4Mc5+svsoq9mmA/ikFsOuLe6OkgngAAAAA==", "data:image/webp;base64,UklGRpYAAABXRUJQVlA4IIoAAADQBACdASoYABgAPwF0sVOrJqQiqAgBYCAJaQAD31QoWxLSBfInvCzXlk0ohJDSAAD+79Y5D+mluQTr2ibFkFlNlsaeln6IghYsKYx7LkX5pbsYagXXogHrLiU7Ta0utRQlz9voVic4uGv1IM+9NZtg7LlH/CmThlj83cvdGtLSd/IUQFF9cMjQAAA=", "data:image/webp;base64,UklGRpQAAABXRUJQVlA4IIgAAADwBACdASoYABgAPwFurlArJiQiqA1RYCAJaQAFEAFKmBntVsWp1tkpMD4EYYNGgAAA/u/Xje6Ue+2XUU7l54LSpFR5aobo2mAZHyh+HYJPhzSJWSPPRVp2NR+ESiDiFn7OkelCjUTqd5JkwkdpHuca5M0324ziTD58xZKxKfTRFZe+UZgW6DAA", "data:image/webp;base64,UklGRpYAAABXRUJQVlA4IIoAAABwBACdASoYABgAPwF2slQrJyQjKAgBYCAJZwAAKSh8+NKnuJpEZw2ZQWgFAAD+79cvGXwigBdxBTUFka8WDudqDqm6lkVcfar7S0HXtnaOya/T/ZS81PI4+du8R/Hegb315/ZJ8GSXDJR/F+1CRURI6FBx3/Kt08HfvE6GEgJ2BxY+kyOLI4V6AAA=", "data:image/webp;base64,UklGRooAAABXRUJQVlA4IH4AAAAwBACdASoYABgAPwFsr0+rJiQiKA1RYCAJaQAAIQKp/enVRUJVqNZxYQgA/u/XMCGIbgCVTcGzpuN0Zr2NkT9d/xTv/MSxXzk/mF8ld8Tw1Ojdkv/O0ue/yBOTbny5aO6GziqL+fhPNv47XDqDcf1G3JsS0qViiEki0VmAAAA=", "data:image/webp;base64,UklGRpAAAABXRUJQVlA4IIQAAAAwBACdASoYABgAPwFwsVIrJiSiqAqpYCAJaQAALnWYGz01wkNK1tObAAAA/u/VFhMym8PvF3+2osMUI0SGp4feg258OZ0+GtGJaSr91K1lD8LzbGmXA6uAEGlVy6sjVm0NPWjcD4uDR28eyn+A98cAYJc41eoTyyuhlbsugyYOBAAAAAA=", "data:image/webp;base64,UklGRpQAAABXRUJQVlA4IIgAAACwBACdASoYABgAPwF2slQrJySjKAgBYCAJZwAL7S8u0La1943m6ljukposk4nAAP7v05oQgfoljUHeKq4yBQN5s2rKKTDRRRVrMUdIFcKJGNJvJeAqn/tp4Hou1zZhgfZ6X0gObC+So2mvFsx2X/8SrCa7y366AsefFDR7x/bcWfv61+IuAAAA", "data:image/webp;base64,UklGRoAAAABXRUJQVlA4IHQAAABwBACdASoYABgAPwF0r1KrJqQiqAqpYCAJaQAALnSdCPBuEl6vE8dDdIbCAAD+79EcFoor2qkUdLLtZXJW53av79h632EUC0TRrxmHyuA7Vt4/QK740g/TQf0ATBXygIlXCDXYV4WKBYDyEnJLaujBAAAAAA==", "data:image/webp;base64,UklGRqgAAABXRUJQVlA4IJwAAACwBACdASoYABgAPv1sqk6rJiOiMBgMAWAfiWkAACnP5Dmddzsjuj7W/iUUtoAAAP7x4E3Us6Lcg0ldcE7h8exmTFuVsccyYVK3qwaO3NCnlykbvvJo5xYGcteBBm14gQGosGxTF626fHxt2DInwksZlvoPfj2F1QPq2RXfQbaYT8ER/mlP4zIUV3qB1iB8yhoNibpjyfh5nFwAAAA=", "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAAAQAwCdASoYABgAPvVop06qpiMiMAwBUB6JaQAAfSPsfgAA/vBpDyrYW/gdBBjD70tcXwFgZipweM7498gml4AAAAA=", "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAAAwBACdASoYABgAPwF0rlArJyQisBgIAWAgCWMAwNwQ7+EGaeVgbgFQo0AA/uvLLsuzM+wUyiiBObrqtf09IwvRrG0REDBTr2V2vDUrUd+GAPJ0JajhlQFi7vOzmzQAAAA=", "data:image/webp;base64,UklGRkoAAABXRUJQVlA4ID4AAAAQAwCdASoYABgAPwF2s1OrJySiqAgBYCAJZwDGfBan4gAA/u83iXjel3OmIHVS8mndVkP3KDg794G6tAAAAA=="];
+  var AVIF_PROBE = "data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADrbWV0YQAAAAAAAAAhaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAAAAAAAOcGl0bQAAAAAAAQAAAB5pbG9jAAAAAEQAAAEAAQAAAAEAAAETAAAAGAAAAChpaW5mAAAAAAABAAAAGmluZmUCAAAAAAEAAGF2MDFDb2xvcgAAAABqaXBycAAAAEtpcGNvAAAAFGlzcGUAAAAAAAAAAgAAAAIAAAAQcGl4aQAAAAADCAgIAAAADGF2MUOBAAwAAAAAE2NvbHJuY2x4AAEADQAGgAAAABdpcG1hAAAAAAAAAAEAAQQBAoMEAAAAIG1kYXQSAAoFGAA2BCAyDRsAGmmmhAAAsBNWXIw=";
+  var SMALL = function (n) { return "pages-m/p-" + (n < 10 ? "0" + n : n) + "." + EXT; };
   function srcFor(n) { return (single && zoom <= 1) ? SMALL(n) : FILE(n); }
 
   function makeFace(cls, page) {
@@ -296,6 +302,7 @@
     prevCur = cur;
     positionBook();
     updateUI();
+    if (started) pump();
   }
 
   /* desktop / tablet: 3D book */
@@ -343,11 +350,18 @@
     if (el) return el;
     el = document.createElement("div");
     el.className = "sp " + (i < cur ? "gone" : "now") + (instant ? " instant" : "");
+    el.style.backgroundImage = "url(" + LQ[i] + ")";
     var img = document.createElement("img");
     img.alt = "صفحه " + fa(i + 1);
     img.decoding = "async";
     img.draggable = false;
     img.dataset.page = i + 1;
+    img.onload = function () { img.classList.add("ok"); };
+    img.onerror = function () {                       // AVIF failed? retry once as WebP
+      if (EXT === "avif" && /\.avif$/.test(img.getAttribute("src") || "")) {
+        EXT = "webp"; img.src = SMALL(i + 1);
+      }
+    };
     el.appendChild(img);
     book.appendChild(el);
     spEls[i] = el;
@@ -511,7 +525,48 @@
   var rt;
   window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(layout, 120); });
   window.addEventListener("orientationchange", function () { setTimeout(layout, 250); });
-  layout();
+  /* ---------- background prefetch: quietly download the rest on phones ---------- */
+  var fetched = {}, inflight = 0, started = false;
+  function pump() {
+    if (!single) return;
+    var c = navigator.connection;
+    if (c && (c.saveData || /(^|-)2g$/.test(c.effectiveType || ""))) return;   // respect data saver
+    while (inflight < 2) {
+      var best = 0, bd = 1e9, i;
+      for (i = 1; i <= TOTAL; i++) {
+        if (fetched[i]) continue;
+        var d = (i - 1 >= cur ? (i - 1 - cur) : (cur - (i - 1)) * 3);       // pages ahead first
+        if (d < bd) { bd = d; best = i; }
+      }
+      if (!best) return;
+      fetched[best] = 1; inflight++;
+      (function (n) {
+        var im = new Image();
+        im.onload = im.onerror = function () { inflight--; setTimeout(pump, 40); };
+        im.src = SMALL(n);
+      })(best);
+    }
+  }
+  function startPrefetch() {
+    if (started) return; started = true;
+    var go = function () { pump(); };
+    if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 1500 }); else setTimeout(go, 800);
+  }
+
+  function detectAvif(cb) {
+    var t = new Image(), done = false;
+    var fin = function (ok) { if (!done) { done = true; cb(ok); } };
+    t.onload = function () { fin(t.width > 0); };
+    t.onerror = function () { fin(false); };
+    t.src = AVIF_PROBE;
+    setTimeout(function () { fin(false); }, 400);
+  }
+
+  detectAvif(function (ok) {
+    EXT = ok ? "avif" : "webp";
+    layout();
+    startPrefetch();
+  });
 })();
 </script>
 </body>
