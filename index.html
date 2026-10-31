@@ -7,16 +7,15 @@
 <meta name="description" content="کاتالوگ تعاملی شرکت مهفام؛ طراحی گرافیک، عکاسی و فیلم‌برداری">
 <meta name="theme-color" content="#0a1840">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a1840'/%3E%3Cpath d='M16 46V18l16 16 16-16v28' fill='none' stroke='%23d9b660' stroke-width='5' stroke-linejoin='round'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600&display=swap">
+<link rel="preload" as="image" href="pages-m/p-01.webp" media="(max-width: 819px)">
+<link rel="preload" as="image" href="pages/p-01.jpg" media="(min-width: 820px)">
 <style>
   :root {
     --navy: #0a1840;
     --navy-deep: #050b1f;
     --gold: #d9b660;
     --ink: #eef1fa;
-    --panel: rgba(10, 24, 64, .92);
+    --panel: rgba(8, 20, 56, .97);
     --line: rgba(217, 182, 96, .35);
     --flip: .9s;
   }
@@ -25,7 +24,7 @@
   body {
     display: flex; flex-direction: column;
     height: 100dvh;
-    font-family: "Vazirmatn", Tahoma, system-ui, sans-serif;
+    font-family: Vazirmatn, Tahoma, "Segoe UI", system-ui, sans-serif;
     color: var(--ink);
     background: radial-gradient(ellipse at 50% 40%, #12275f 0%, var(--navy) 45%, var(--navy-deep) 100%);
     overflow: hidden;
@@ -77,6 +76,19 @@
   body.single .face::after { display: none; }
   body.single .face { box-shadow: none; }
 
+  /* phone mode: plain 2D slide, no 3D layers */
+  .sp {
+    position: absolute; left: 0; top: 0; width: var(--p); height: var(--p);
+    background: var(--navy); overflow: hidden; will-change: transform;
+    box-shadow: 0 0 22px rgba(0,0,0,.35);
+    transition: transform .38s cubic-bezier(.3,.1,.2,1);
+  }
+  .sp.gone { transform: translate3d(104%, 0, 0); }
+  .sp.now  { transform: translate3d(0, 0, 0); }
+  .sp.instant { transition: none; }
+  .sp img { width: 100%; height: 100%; display: block; object-fit: cover; pointer-events: none; -webkit-user-drag: none; }
+  body.single #book { perspective: none; }
+
   /* toolbar */
   #bar {
     flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
@@ -102,7 +114,6 @@
     position: absolute; bottom: 70px; right: .75rem; z-index: 20;
     width: min(320px, calc(100vw - 1.5rem)); max-height: min(70vh, 480px); overflow: auto;
     background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     padding: .5rem; display: none;
     box-shadow: 0 20px 50px rgba(0,0,0,.5);
   }
@@ -195,7 +206,8 @@
   /* ---------- state ---------- */
   var single = false;     // one page at a time (phones / portrait)
   var cur = 0;            // number of leaves already flipped
-  var leaves = [];        // leaf elements
+  var leaves = [];        // leaf elements (desktop)
+  var built = false;
   var P = 400;            // page side in px
   var zoom = 1, panX = 0, panY = 0;
 
@@ -211,6 +223,9 @@
   }
 
   /* ---------- build ---------- */
+  var SMALL = function (n) { return "pages-m/p-" + (n < 10 ? "0" + n : n) + ".webp"; };
+  function srcFor(n) { return (single && zoom <= 1) ? SMALL(n) : FILE(n); }
+
   function makeFace(cls, page) {
     var d = document.createElement("div");
     d.className = "face " + cls + (page ? "" : " blank");
@@ -219,7 +234,6 @@
       img.alt = "صفحه " + fa(page);
       img.decoding = "async";
       img.draggable = false;
-      img.dataset.src = FILE(page);
       img.dataset.page = page;
       d.appendChild(img);
     }
@@ -229,17 +243,13 @@
   function build() {
     book.innerHTML = "";
     leaves = [];
-    var n = leafCount();
-    for (var i = 0; i < n; i++) {
+    spEls = {};
+    if (single) return;                      // phone mode mounts pages on demand
+    for (var i = 0; i < TOTAL / 2; i++) {
       var leaf = document.createElement("div");
       leaf.className = "leaf";
-      if (single) {
-        leaf.appendChild(makeFace("front", i + 1));
-        leaf.appendChild(makeFace("back", 0));
-      } else {
-        leaf.appendChild(makeFace("front", 2 * i + 1));
-        leaf.appendChild(makeFace("back", 2 * i + 2));
-      }
+      leaf.appendChild(makeFace("front", 2 * i + 1));
+      leaf.appendChild(makeFace("back", 2 * i + 2));
       book.appendChild(leaf);
       leaves.push(leaf);
     }
@@ -250,11 +260,13 @@
     var r = stage.getBoundingClientRect();
     var w = r.width, h = r.height;
     var wantSingle = (w < 820) || (w / h < 1.3);
-    if (wantSingle !== single || !leaves.length) {
-      var vis = leaves.length ? visiblePages()[0] : 1;
+    if (wantSingle !== single || !built) {
+      var vis = built ? visiblePages()[0] : 1;
       single = wantSingle;
+      built = true;
       document.body.classList.toggle("single", single);
       cur = single ? vis - 1 : Math.floor(vis / 2);
+      prevCur = null;
       build();
       applyState(true);
     }
@@ -278,14 +290,23 @@
 
   /* ---------- state -> DOM ---------- */
   var prevCur = null, zTimer = null;
+
   function applyState(instant) {
+    if (single) applySingle(instant); else applyDouble(instant);
+    prevCur = cur;
+    positionBook();
+    updateUI();
+  }
+
+  /* desktop / tablet: 3D book */
+  function applyDouble(instant) {
     var n = leaves.length;
     var from = prevCur === null ? cur : prevCur;
     var lo = Math.min(from, cur), hi = Math.max(from, cur);
     var forward = cur >= from;
     var k = 0;
     for (var j = 0; j < n; j++) {
-      var i = forward ? j : n - 1 - j;           // order of the staggered flip
+      var i = forward ? j : n - 1 - j;
       var el = leaves[i];
       var flipped = i < cur;
       var moving = !instant && i >= lo && i < hi;
@@ -300,10 +321,60 @@
     zTimer = setTimeout(function () {
       leaves.forEach(function (el, i) { el.style.zIndex = (i < cur) ? i + 1 : leaves.length - i; });
     }, instant ? 0 : 1500);
-    prevCur = cur;
-    positionBook();
-    updateUI();
-    loadImages();
+    loadDouble();
+  }
+
+  /* load nearby images, free far-away ones (keeps memory low) */
+  function loadDouble() {
+    var v = visiblePages();
+    var lo = Math.max(1, v[0] - 4), hi = Math.min(TOTAL, v[v.length - 1] + 5);
+    var imgs = book.querySelectorAll("img");
+    for (var i = 0; i < imgs.length; i++) {
+      var p = +imgs[i].dataset.page, has = imgs[i].getAttribute("src");
+      if (p >= lo && p <= hi) { if (!has) imgs[i].src = FILE(p); }
+      else if (has && (p < lo - 5 || p > hi + 5)) imgs[i].removeAttribute("src");
+    }
+  }
+
+  /* phone: only ~5 flat pages exist at any time */
+  var spEls = {};
+  function mountSingle(i, instant) {
+    var el = spEls[i];
+    if (el) return el;
+    el = document.createElement("div");
+    el.className = "sp " + (i < cur ? "gone" : "now") + (instant ? " instant" : "");
+    var img = document.createElement("img");
+    img.alt = "صفحه " + fa(i + 1);
+    img.decoding = "async";
+    img.draggable = false;
+    img.dataset.page = i + 1;
+    el.appendChild(img);
+    book.appendChild(el);
+    spEls[i] = el;
+    return el;
+  }
+  function applySingle(instant) {
+    var lo = Math.max(0, cur - 2), hi = Math.min(TOTAL - 1, cur + 3);
+    Object.keys(spEls).forEach(function (k) {
+      if (k < lo || k > hi) { var im = spEls[k].firstChild; im.removeAttribute("src"); spEls[k].remove(); delete spEls[k]; }
+    });
+    for (var i = lo; i <= hi; i++) {
+      var el = mountSingle(i, true);
+      var img = el.firstChild;
+      var want = srcFor(i + 1);
+      if (img.getAttribute("src") !== want && (i >= cur - 1 && i <= cur + 2)) img.src = want;
+      if (instant || el.classList.contains("instant")) el.classList.add("instant");
+      el.classList.toggle("gone", i < cur);
+      el.classList.toggle("now", i >= cur);
+      el.style.zIndex = i < cur ? i + 1 : TOTAL - i;
+    }
+    if (!instant) {
+      requestAnimationFrame(function () { requestAnimationFrame(function () {
+        Object.keys(spEls).forEach(function (k) { spEls[k].classList.remove("instant"); });
+      }); });
+    } else {
+      setTimeout(function () { Object.keys(spEls).forEach(function (k) { spEls[k].classList.remove("instant"); }); }, 60);
+    }
   }
 
   function updateUI() {
@@ -313,32 +384,21 @@
       : fa(v[0]) + " / " + fa(TOTAL);
     btnPrev.disabled = cur <= 0;
     btnNext.disabled = cur >= maxCur();
-    var cp = v[0];
+    var cp = v[0], maxV = v[v.length - 1];
     Array.prototype.forEach.call(toc.querySelectorAll("button"), function (b) {
-      var p = +b.dataset.page;
-      var next = null;
+      var p = +b.dataset.page, next = null;
       for (var i = 0; i < TOC.length; i++) { if (TOC[i][0] > p) { next = TOC[i][0]; break; } }
-      var maxV = v[v.length - 1];
       b.classList.toggle("active", maxV >= p && (next === null || cp < next));
     });
-  }
-
-  function loadImages() {
-    var v = visiblePages();
-    var lo = Math.max(1, v[0] - 6), hi = Math.min(TOTAL, v[v.length - 1] + 8);
-    var imgs = book.querySelectorAll("img[data-src]");
-    for (var i = 0; i < imgs.length; i++) {
-      var p = +imgs[i].dataset.page;
-      if (p >= lo && p <= hi) { imgs[i].src = imgs[i].dataset.src; imgs[i].removeAttribute("data-src"); }
-    }
   }
 
   /* ---------- navigation ---------- */
   function setCur(c) {
     c = Math.max(0, Math.min(maxCur(), c));
     if (c === cur) return;
+    var jump = Math.abs(c - cur) > 1 && single;
     cur = c;
-    applyState(false);
+    applyState(jump);
   }
   function next() { setCur(cur + 1); }
   function prev() { setCur(cur - 1); }
@@ -359,6 +419,13 @@
     zoomEl.style.transform = "translate(" + panX + "px," + panY + "px) scale(" + zoom + ")";
     stage.classList.toggle("zoomed", zoom > 1);
     btnZoom.classList.toggle("on", zoom > 1);
+    if (single && built) {                        // sharper image while zoomed in
+      [cur - 1, cur].forEach(function (i) {
+        var el = spEls[i]; if (!el) return;
+        var want = srcFor(i + 1);
+        if (el.firstChild.getAttribute("src") !== want) el.firstChild.src = want;
+      });
+    }
   }
   function toggleZoom() {
     zoom = zoom > 1 ? 1 : 2.2;
@@ -445,7 +512,6 @@
   window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(layout, 120); });
   window.addEventListener("orientationchange", function () { setTimeout(layout, 250); });
   layout();
-  applyState(true);
 })();
 </script>
 </body>
