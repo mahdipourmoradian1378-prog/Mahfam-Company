@@ -13,8 +13,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="مهفام">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a1840'/%3E%3Cpath d='M16 46V18l16 16 16-16v28' fill='none' stroke='%23d9b660' stroke-width='5' stroke-linejoin='round'/%3E%3C/svg%3E">
-<link rel="preload" as="image" type="image/avif" href="pages-m/p-01.avif" media="(max-width: 819px)">
-<link rel="preload" as="image" href="pages/p-01.jpg" media="(min-width: 820px)">
 <style>
   :root {
     --navy: #0a1840;
@@ -257,27 +255,126 @@
   var EXT = "webp";
   var AVIF_PROBE = "data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADrbWV0YQAAAAAAAAAhaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAAAAAAAOcGl0bQAAAAAAAQAAAB5pbG9jAAAAAEQAAAEAAQAAAAEAAAETAAAAGAAAAChpaW5mAAAAAAABAAAAGmluZmUCAAAAAAEAAGF2MDFDb2xvcgAAAABqaXBycAAAAEtpcGNvAAAAFGlzcGUAAAAAAAAAAgAAAAIAAAAQcGl4aQAAAAADCAgIAAAADGF2MUOBAAwAAAAAE2NvbHJuY2x4AAEADQAGgAAAABdpcG1hAAAAAAAAAAEAAQQBAoMEAAAAIG1kYXQSAAoFGAA2BCAyDRsAGmmmhAAAsBNWXIw=";
   var SMALL = function (n) { return "pages-m/p-" + (n < 10 ? "0" + n : n) + "." + EXT; };
-  var loadedUrl = {}, waiting = {};
-  function preload(url, cb) {
-    if (loadedUrl[url]) { cb(true); return; }
-    if (waiting[url]) { waiting[url].push(cb); return; }
-    waiting[url] = [cb];
-    var im = new Image();
-    var done = function (ok) { if (ok) loadedUrl[url] = true; var l = waiting[url]; delete waiting[url]; l.forEach(function (f) { f(ok); }); };
-    im.onload = function () { (im.decode ? im.decode() : Promise.resolve()).then(function () { done(true); }, function () { done(true); }); };
-    im.onerror = function () { done(false); };
-    im.src = url;
+  var CACHE_NAME = "mahfam-v2";                      // keep identical to the name in sw.js
+  var blobOf = {}, jobs = {}, fgActive = 0;
+  var MIME = { avif: "image/avif", webp: "image/webp", jpg: "image/jpeg" };
+  function mimeOf(u) { return MIME[(u.split(".").pop() || "").toLowerCase()] || "application/octet-stream"; }
+
+  /* Robust download for slow / unstable connections:
+     - a connection that stops sending data for a few seconds is cancelled and the download RESUMES
+       from the bytes already received (HTTP Range) instead of waiting forever
+     - up to 8 attempts with a short pause between them
+     - files already saved on the device are used without any network */
+  function fetchBlob(url, fg, cb) {
+    if (blobOf[url]) { cb(true); return; }
+    var job = jobs[url];
+    if (job) {
+      job.cbs.push(cb);
+      if (fg && !job.fg) { job.fg = true; fgActive++; yieldToForeground(); }
+      return;
+    }
+    job = jobs[url] = { cbs: [cb], fg: !!fg, done: false, ctl: null, yielded: false };
+    if (job.fg) { fgActive++; yieldToForeground(); }
+    var chunks = [], got = 0, attempt = 0;
+
+    function finish(ok, blob, fromCache) {
+      if (job.done) return;
+      job.done = true;
+      var cbs = job.cbs;
+      delete jobs[url];
+      if (job.fg) fgActive--;
+      if (ok) {
+        blobOf[url] = URL.createObjectURL(blob);
+        if (!fromCache && "caches" in window) {
+          caches.open(CACHE_NAME).then(function (c) {
+            return c.put(url, new Response(blob, { headers: { "Content-Type": mimeOf(url) } }));
+          }).catch(function () {});
+        }
+        refreshImages();
+      }
+      cbs.forEach(function (f) { try { f(ok); } catch (e) {} });
+      setTimeout(pump, 20);
+    }
+
+    function attemptOnce() {
+      if (job.done) return;
+      attempt++;
+      var ctl = new AbortController(), timer = null, failed = false;
+      job.ctl = ctl;
+      function arm(ms) { clearTimeout(timer); timer = setTimeout(retry, ms); }
+      function retry() {
+        if (failed || job.done) return;
+        failed = true; clearTimeout(timer);
+        try { ctl.abort(); } catch (e) {}
+        if (job.yielded) {                                  // paused for a page the reader is waiting for
+          job.yielded = false; attempt--;
+          (function wait() { if (fgActive > 0) setTimeout(wait, 500); else attemptOnce(); })();
+          return;
+        }
+        if (attempt >= 8) { finish(false); return; }
+        setTimeout(attemptOnce, Math.min(400 * attempt, 2500));
+      }
+      arm(9000);                                            // waiting for the first byte
+      var headers = got > 0 ? { Range: "bytes=" + got + "-" } : {};
+      fetch(url, { signal: ctl.signal, headers: headers }).then(function (res) {
+        if (res.status === 416 && got > 0) { clearTimeout(timer); finish(true, new Blob(chunks, { type: mimeOf(url) })); return; }
+        if (res.status !== 200 && res.status !== 206) throw new Error("status " + res.status);
+        if (res.status === 200 && got > 0) { chunks = []; got = 0; }       // server ignored Range: start over
+        if (!res.body || !res.body.getReader) {
+          return res.blob().then(function (b) { clearTimeout(timer); finish(true, b); });
+        }
+        var reader = res.body.getReader();
+        function pull() {
+          arm(4500);                                        // no data for 4.5 s = stalled -> cancel and resume
+          return reader.read().then(function (r) {
+            if (r.done) { clearTimeout(timer); finish(true, new Blob(chunks, { type: mimeOf(url) })); return; }
+            chunks.push(r.value); got += r.value.length;
+            return pull();
+          });
+        }
+        return pull();
+      }).catch(retry);
+    }
+
+    var started = false;
+    function go() { if (!started) { started = true; attemptOnce(); } }
+    if ("caches" in window) {
+      caches.open(CACHE_NAME).then(function (c) { return c.match(url); }).then(function (hit) {
+        if (hit) return hit.blob().then(function (b) { started = true; finish(true, b, true); });
+        go();
+      }).catch(go);
+    } else go();
   }
-  function loadPage(n, cb) {                 // phone image of page n, with AVIF -> WebP fallback
-    preload(SMALL(n), function (ok) {
-      if (!ok && EXT === "avif") { EXT = "webp"; preload(SMALL(n), cb); } else cb(ok);
+
+  /* when a reader is waiting for a page, pause background downloads so it gets the whole line */
+  function yieldToForeground() {
+    Object.keys(jobs).forEach(function (u) {
+      var j = jobs[u];
+      if (!j.fg && j.ctl) { j.yielded = true; try { j.ctl.abort(); } catch (e) {} }
     });
   }
-  function isReady(n) { return !!loadedUrl[SMALL(n)]; }
+
+  function loadPage(n, cb, fg) {
+    fetchBlob(SMALL(n), fg, function (ok) {
+      if (!ok || !fg) { cb(ok); return; }
+      var im = new Image();                                  // decode before showing -> appears instantly
+      im.src = blobOf[SMALL(n)];
+      (im.decode ? im.decode() : Promise.resolve()).then(function () { cb(true); }, function () { cb(true); });
+    });
+  }
+  function isReady(n) { return !!blobOf[SMALL(n)]; }
+  function pickUrl(n) { var hi = FILE(n); return (single && zoom > 1 && blobOf[hi]) ? hi : SMALL(n); }
+  function setImgSrc(img, page) {
+    var b = blobOf[pickUrl(page)];
+    if (b && img.getAttribute("src") !== b) img.src = b;
+  }
+  function refreshImages() {
+    if (!single) return;
+    Object.keys(spEls).forEach(function (k) { setImgSrc(spEls[k].firstChild, +k + 1); });
+  }
   var spinTimer = null;
   function showSpin(now) { clearTimeout(spinTimer); spinTimer = setTimeout(function () { stage.classList.add("busy"); }, now ? 0 : 150); }
   function hideSpin() { clearTimeout(spinTimer); stage.classList.remove("busy"); }
-  function srcFor(n) { return (single && zoom <= 1) ? SMALL(n) : FILE(n); }
 
   function makeFace(cls, page) {
     var d = document.createElement("div");
@@ -404,11 +501,6 @@
     img.draggable = false;
     img.dataset.page = i + 1;
     img.onload = function () { img.classList.add("ok"); };
-    img.onerror = function () {                       // AVIF failed? retry once as WebP
-      if (EXT === "avif" && /\.avif$/.test(img.getAttribute("src") || "")) {
-        EXT = "webp"; img.src = SMALL(i + 1);
-      }
-    };
     el.appendChild(img);
     book.appendChild(el);
     spEls[i] = el;
@@ -422,8 +514,7 @@
     for (var i = lo; i <= hi; i++) {
       var el = mountSingle(i, true);
       var img = el.firstChild;
-      var want = srcFor(i + 1);
-      if (img.getAttribute("src") !== want && (i >= cur - 1 && i <= cur + 2)) img.src = want;
+      setImgSrc(img, i + 1);
       if (instant || el.classList.contains("instant")) el.classList.add("instant");
       el.classList.toggle("gone", i < cur);
       el.classList.toggle("now", i >= cur);
@@ -466,10 +557,13 @@
     if (c === cur) { hideSpin(); return; }
     if (single && !isReady(c + 1)) {           // never show a half-loaded page: wait for it
       showSpin(false);
-      loadPage(c + 1, function () {
-        if (token !== navToken) return;
-        hideSpin(); commit(c);
-      });
+      (function tryLoad() {
+        loadPage(c + 1, function (ok) {
+          if (token !== navToken) return;
+          if (!ok) { toast("اتصال ضعیف است؛ دوباره تلاش می‌کنیم…"); tryLoad(); return; }
+          hideSpin(); commit(c);
+        }, true);
+      })();
       return;
     }
     hideSpin();
@@ -495,12 +589,8 @@
     stage.classList.toggle("zoomed", zoom > 1);
     btnZoom.classList.toggle("on", zoom > 1);
     if (single && built) {                        // sharper image while zoomed in
-      [cur - 1, cur].forEach(function (i) {
-        var el = spEls[i]; if (!el) return;
-        var img = el.firstChild, want = srcFor(i + 1);
-        if (img.getAttribute("src") === want) return;
-        preload(want, function (ok) { if (ok && spEls[i] === el) img.src = want; });
-      });
+      if (zoom > 1) fetchBlob(FILE(cur + 1), true, function () { refreshImages(); });
+      refreshImages();
     }
   }
   function toggleZoom() {
@@ -588,22 +678,25 @@
   window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(layout, 120); });
   window.addEventListener("orientationchange", function () { setTimeout(layout, 250); });
   /* ---------- background prefetch: quietly download the rest on phones ---------- */
-  var fetched = {}, inflight = 0, started = false;
+  var fetched = {}, bgActive = 0, started = false;
   function pump() {
-    if (!single) return;
+    if (!single || !started) return;
+    if (fgActive > 0 || bgActive >= 1) return;                 // one quiet background download at a time
     var c = navigator.connection;
-    if (c && (c.saveData || /(^|-)2g$/.test(c.effectiveType || ""))) return;   // respect data saver
-    while (inflight < 2) {
-      var best = 0, bd = 1e9, i;
-      for (i = 1; i <= TOTAL; i++) {
-        if (fetched[i]) continue;
-        var d = (i - 1 >= cur ? (i - 1 - cur) : (cur - (i - 1)) * 3);       // pages ahead first
-        if (d < bd) { bd = d; best = i; }
-      }
-      if (!best) return;
-      fetched[best] = 1; inflight++;
-      loadPage(best, function () { inflight--; setTimeout(pump, 30); });
+    if (c && c.saveData) return;                                // respect data saver
+    var best = 0, bd = 1e9, i;
+    for (i = 1; i <= TOTAL; i++) {
+      if (fetched[i] || blobOf[SMALL(i)]) continue;
+      var d = (i - 1 >= cur ? (i - 1 - cur) : (cur - (i - 1)) * 3);   // pages ahead first
+      if (d < bd) { bd = d; best = i; }
     }
+    if (!best) return;
+    var n = best;
+    fetched[n] = 1; bgActive++;
+    fetchBlob(SMALL(n), false, function (ok) {
+      bgActive--;
+      if (!ok) setTimeout(function () { fetched[n] = 0; pump(); }, 8000);
+    });
   }
   function startPrefetch() {
     if (started) return; started = true;
@@ -612,7 +705,7 @@
   }
 
   /* ---------- offline: save the whole catalogue on the device ---------- */
-  var OFF_CACHE = "mahfam-v1";                       // keep identical to the name in sw.js
+  var OFF_CACHE = CACHE_NAME;
   var btnOffline = $("btnOffline"), offLbl = $("offLbl"), offIcon = $("offIcon"), offFill = btnOffline.querySelector(".fill");
   var toastEl = $("toast"), toastTimer, offBusy = false;
   var CHECK_PATH = '<path d="M5 12.5l4.5 4.5L19 7.5"/>';
@@ -622,9 +715,9 @@
     toastEl.textContent = msg; toastEl.classList.add("show");
     clearTimeout(toastTimer); toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 3200);
   }
-  function offlineUrls() {
+  function offlineUrls() {                           // relative URLs, same strings the loader uses
     var list = [];
-    for (var n = 1; n <= TOTAL; n++) list.push(new URL(single ? SMALL(n) : FILE(n), location.href).href);
+    for (var n = 1; n <= TOTAL; n++) list.push(single ? SMALL(n) : FILE(n));
     return list;
   }
   function setOffState(state, pct) {
@@ -637,7 +730,7 @@
     if (!("caches" in window)) { btnOffline.style.display = "none"; return; }
     caches.open(OFF_CACHE).then(function (c) { return c.keys(); }).then(function (keys) {
       var have = {}; keys.forEach(function (k) { have[k.url] = 1; });
-      var all = offlineUrls().every(function (u) { return have[u]; });
+      var all = offlineUrls().every(function (u) { return have[new URL(u, location.href).href]; });
       setOffState(all ? "done" : "idle");
     }).catch(function () {});
   }
@@ -648,24 +741,22 @@
     var urls = offlineUrls(), total = urls.length, doneN = 0, idx = 0, failed = 0;
     setOffState("busy", 0);
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
-    caches.open(OFF_CACHE).then(function (cache) {
-      function worker() {
-        if (idx >= total) return Promise.resolve();
-        var u = urls[idx++];
-        return cache.match(u).then(function (hit) {
-          if (hit) return;
-          return fetch(u).then(function (r) { if (!r.ok) throw 0; return cache.put(u, r); });
-        }).catch(function () { failed++; }).then(function () {
+    function worker() {
+      if (idx >= total) return Promise.resolve();
+      var u = urls[idx++];
+      return new Promise(function (res) {
+        fetchBlob(u, true, function (ok) {
+          if (!ok) failed++;
           doneN++; setOffState("busy", Math.round(doneN / total * 100));
-          return worker();
+          res();
         });
-      }
-      return Promise.all([worker(), worker(), worker()]);
-    }).then(function () {
+      }).then(worker);
+    }
+    Promise.all([worker(), worker()]).then(function () {
       offBusy = false;
       if (failed) { setOffState("idle"); toast("ذخیره کامل نشد؛ اینترنت را بررسی کنید و دوباره امتحان کنید."); }
       else { setOffState("done"); toast("کاتالوگ ذخیره شد؛ حالا بدون اینترنت هم کار می‌کند."); }
-    }).catch(function () { offBusy = false; setOffState("idle"); toast("ذخیره انجام نشد."); });
+    });
   }
   btnOffline.addEventListener("click", function () {
     if (btnOffline.classList.contains("done")) toast("کاتالوگ روی این دستگاه ذخیره شده و بدون اینترنت باز می‌شود.");
@@ -691,7 +782,12 @@
     setTimeout(checkOffline, 600);
     if (!phone) { layout(); return; }
     showSpin(true);                              // show the cover only when it is fully loaded
-    loadPage(1, function () { hideSpin(); layout(); startPrefetch(); });
+    (function first() {
+      loadPage(1, function (ok) {
+        if (!ok) { toast("اتصال ضعیف است؛ دوباره تلاش می‌کنیم…"); first(); return; }
+        hideSpin(); layout(); startPrefetch();
+      }, true);
+    })();
   });
 })();
 </script>
