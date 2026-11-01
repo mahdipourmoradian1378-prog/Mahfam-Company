@@ -1,7 +1,7 @@
 /* Mahfam catalogue – offline support.
    If you ever replace the page images, change the version below (e.g. v3) here AND in index.html (CACHE_NAME)
    so phones fetch the new ones. */
-const CACHE = "mahfam-v3";
+const CACHE = "mahfam-v4";
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
@@ -26,12 +26,8 @@ self.addEventListener("fetch", (e) => {
   if (/\.pdf$/i.test(url.pathname)) return;                 // the big PDF always uses the network
   if (req.headers.has("range")) return;                     // resumed downloads go straight to the network
 
-  // page images: the page saves them itself; here we only serve a saved copy if there is one
-  if (/\/pages(-m|-hq)\//.test(url.pathname)) return;            // phone images: the page downloads and saves them itself
-  if (/\/pages\//.test(url.pathname)) {
-    e.respondWith(caches.match(req).then((hit) => hit || fetch(req)));
-    return;
-  }
+  // (page images are handled by the page itself)
+  if (/\/pages[^/]*\//.test(url.pathname)) return;           // page images: the page downloads and saves them itself
 
   // the page itself: newest version when online, saved copy when offline
   e.respondWith(
