@@ -101,6 +101,22 @@
   #stage.busy #spin { display: block; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  #rot { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 25; display: none;
+    align-items: center; gap: .5rem; padding: .45rem .8rem; border-radius: 999px; font: inherit; font-size: .8rem;
+    color: var(--ink); background: var(--panel); border: 1px solid var(--line); cursor: pointer; white-space: nowrap; }
+  #rot.show { display: inline-flex; }
+  #rot svg { width: 18px; height: 18px; fill: none; stroke: var(--gold); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* phone held sideways: use the whole screen for the two pages */
+  body.compact header { display: none; }
+  body.compact #bar { padding: .2rem .5rem .3rem; gap: .35rem; }
+  body.compact .btn { height: 36px; min-width: 36px; }
+  body.compact #toc { bottom: 52px; }
+  #toc a.act { display: flex; width: 100%; align-items: center; gap: .7rem; padding: .6rem .7rem; border-radius: 12px;
+    color: var(--ink); text-decoration: none; }
+  #toc a.act:hover { background: rgba(217,182,96,.18); }
+  #toc .sep { height: 1px; background: var(--line); margin: .4rem .3rem; }
+
   /* toolbar */
   #bar {
     flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
@@ -175,6 +191,7 @@
 <div id="stage" aria-label="کاتالوگ تعاملی">
   <div id="zoom"><div id="book"></div></div>
   <div id="spin"></div>
+  <button id="rot" type="button" aria-label="چرخاندن گوشی"><svg viewBox="0 0 24 24"><path d="M4 9a8 8 0 0 1 14-3l2 2M20 4v4h-4M20 15a8 8 0 0 1-14 3l-2-2M4 20v-4h4"/></svg><span>برای نمایش بزرگ‌تر، گوشی را بچرخانید</span></button>
 </div>
 
 <div id="toast" role="status" aria-live="polite"></div>
@@ -196,7 +213,6 @@
     <svg viewBox="0 0 24 24" id="offIcon"><path d="M7 18a4 4 0 0 1-.6-7.96A6 6 0 0 1 18 9.5 4.5 4.5 0 0 1 17.5 18H7zM12 10v6M9.5 13.5L12 16l2.5-2.5"/></svg><span class="lbl" id="offLbl">آفلاین</span>
   </button>
   <button class="btn" id="btnFull" aria-label="تمام‌صفحه"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
-  <a class="btn" id="btnPdf" href="mahfam-cataloue.pdf" download aria-label="دانلود PDF"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span class="lbl">PDF</span></a>
 </nav>
 
 <noscript><p>برای مشاهده کاتالوگ، جاوااسکریپت را فعال کنید یا <a href="mahfam-cataloue.pdf">فایل PDF</a> را دانلود کنید.</p></noscript>
@@ -227,13 +243,15 @@
   /* ---------- elements ---------- */
   var $ = function (id) { return document.getElementById(id); };
   var stage = $("stage"), zoomEl = $("zoom"), book = $("book"), toc = $("toc");
-  var btnPrev = $("btnPrev"), btnNext = $("btnNext"), btnZoom = $("btnZoom"),
+  var rot = $("rot"), btnPrev = $("btnPrev"), btnNext = $("btnNext"), btnZoom = $("btnZoom"),
       btnFull = $("btnFull"), btnToc = $("btnToc"), indicator = $("indicator");
 
   var fa = function (n) { return Number(n).toLocaleString("fa-IR", { useGrouping: false }); };
 
   /* ---------- state ---------- */
-  var single = false;     // one page at a time (phones / portrait)
+  var VIEW = "spread";    // "spread" = two pages side by side like a real catalogue (default), "single" = one page
+  try { if (localStorage.getItem("mahfam_view") === "single") VIEW = "single"; } catch (e) {}
+  var single = false;
   var cur = 0;            // number of leaves already flipped
   var leaves = [];        // leaf elements (desktop)
   var built = false;
@@ -243,19 +261,20 @@
   function leafCount() { return single ? TOTAL : TOTAL / 2; }
   function maxCur()    { return single ? TOTAL - 1 : TOTAL / 2; }
 
-  /* page numbers currently visible, 1-based */
-  function visiblePages() {
-    if (single) return [cur + 1];
-    if (cur === 0) return [1];
-    if (cur === TOTAL / 2) return [TOTAL];
-    return [2 * cur, 2 * cur + 1];
+  /* page numbers shown for a given state c, 1-based */
+  function pagesFor(c) {
+    if (single) return [c + 1];
+    if (c === 0) return [1];
+    if (c === TOTAL / 2) return [TOTAL];
+    return [2 * c, 2 * c + 1];
   }
+  function visiblePages() { return pagesFor(cur); }
 
   /* ---------- build ---------- */
   var EXT = "webp";
   var AVIF_PROBE = "data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADrbWV0YQAAAAAAAAAhaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAAAAAAAOcGl0bQAAAAAAAQAAAB5pbG9jAAAAAEQAAAEAAQAAAAEAAAETAAAAGAAAAChpaW5mAAAAAAABAAAAGmluZmUCAAAAAAEAAGF2MDFDb2xvcgAAAABqaXBycAAAAEtpcGNvAAAAFGlzcGUAAAAAAAAAAgAAAAIAAAAQcGl4aQAAAAADCAgIAAAADGF2MUOBAAwAAAAAE2NvbHJuY2x4AAEADQAGgAAAABdpcG1hAAAAAAAAAAEAAQQBAoMEAAAAIG1kYXQSAAoFGAA2BCAyDRsAGmmmhAAAsBNWXIw=";
-  var SMALL = function (n) { return "pages-m/p-" + (n < 10 ? "0" + n : n) + "." + EXT; };
-  var CACHE_NAME = "mahfam-v2";                      // keep identical to the name in sw.js
+  var SMALL = function (n) { return "pages-hq/p-" + (n < 10 ? "0" + n : n) + "." + EXT; };   // sharp 1200 px pages
+  var CACHE_NAME = "mahfam-v3";                      // keep identical to the name in sw.js
   var blobOf = {}, jobs = {}, fgActive = 0;
   var MIME = { avif: "image/avif", webp: "image/webp", jpg: "image/jpeg" };
   function mimeOf(u) { return MIME[(u.split(".").pop() || "").toLowerCase()] || "application/octet-stream"; }
@@ -363,14 +382,23 @@
     });
   }
   function isReady(n) { return !!blobOf[SMALL(n)]; }
-  function pickUrl(n) { var hi = FILE(n); return (single && zoom > 1 && blobOf[hi]) ? hi : SMALL(n); }
   function setImgSrc(img, page) {
-    var b = blobOf[pickUrl(page)];
+    var b = blobOf[SMALL(page)];
     if (b && img.getAttribute("src") !== b) img.src = b;
   }
+  /* give nearby pages their image, free far-away ones (keeps phone memory low) */
   function refreshImages() {
-    if (!single) return;
-    Object.keys(spEls).forEach(function (k) { setImgSrc(spEls[k].firstChild, +k + 1); });
+    if (single) {
+      Object.keys(spEls).forEach(function (k) { setImgSrc(spEls[k].firstChild, +k + 1); });
+      return;
+    }
+    var v = visiblePages(), lo = v[0] - 2, hi = v[v.length - 1] + 3;
+    var imgs = book.querySelectorAll("img");
+    for (var i = 0; i < imgs.length; i++) {
+      var pg = +imgs[i].dataset.page;
+      if (pg >= lo && pg <= hi) setImgSrc(imgs[i], pg);
+      else if ((pg < lo - 3 || pg > hi + 3) && imgs[i].getAttribute("src")) imgs[i].removeAttribute("src");
+    }
   }
   var spinTimer = null;
   function showSpin(now) { clearTimeout(spinTimer); spinTimer = setTimeout(function () { stage.classList.add("busy"); }, now ? 0 : 150); }
@@ -406,10 +434,16 @@
   }
 
   /* ---------- layout ---------- */
+  function updateRotateHint() {
+    var show = !single && window.innerWidth < 600 && window.innerHeight > window.innerWidth;
+    try { if (sessionStorage.getItem("mahfam_rot") === "1") show = false; } catch (e) {}
+    rot.classList.toggle("show", show);
+  }
   function layout() {
+    document.body.classList.toggle("compact", window.innerHeight < 520 && window.innerWidth > window.innerHeight);
     var r = stage.getBoundingClientRect();
     var w = r.width, h = r.height;
-    var wantSingle = (w < 820) || (w / h < 1.3);
+    var wantSingle = (VIEW === "single");
     if (wantSingle !== single || !built) {
       var vis = built ? visiblePages()[0] : 1;
       single = wantSingle;
@@ -419,7 +453,7 @@
       prevCur = null;
       build();
       applyState(true);
-      if (single && typeof startPrefetch === "function") startPrefetch();
+      if (typeof startPrefetch === "function") startPrefetch();
     }
     P = Math.floor(single ? Math.min(w * 0.98, h * 0.97) : Math.min(w / 2 * 0.97, h * 0.97));
     book.style.setProperty("--p", P + "px");
@@ -427,6 +461,7 @@
     book.style.height = P + "px";
     positionBook();
     clampPan(); applyZoom(true);
+    updateRotateHint();
   }
 
   function positionBook() {
@@ -473,19 +508,7 @@
     zTimer = setTimeout(function () {
       leaves.forEach(function (el, i) { el.style.zIndex = (i < cur) ? i + 1 : leaves.length - i; });
     }, instant ? 0 : 1500);
-    loadDouble();
-  }
-
-  /* load nearby images, free far-away ones (keeps memory low) */
-  function loadDouble() {
-    var v = visiblePages();
-    var lo = Math.max(1, v[0] - 4), hi = Math.min(TOTAL, v[v.length - 1] + 5);
-    var imgs = book.querySelectorAll("img");
-    for (var i = 0; i < imgs.length; i++) {
-      var p = +imgs[i].dataset.page, has = imgs[i].getAttribute("src");
-      if (p >= lo && p <= hi) { if (!has) imgs[i].src = FILE(p); }
-      else if (has && (p < lo - 5 || p > hi + 5)) imgs[i].removeAttribute("src");
-    }
+    refreshImages();
   }
 
   /* phone: only ~5 flat pages exist at any time */
@@ -537,7 +560,7 @@
     btnPrev.disabled = cur <= 0;
     btnNext.disabled = cur >= maxCur();
     var cp = v[0], maxV = v[v.length - 1];
-    Array.prototype.forEach.call(toc.querySelectorAll("button"), function (b) {
+    Array.prototype.forEach.call(toc.querySelectorAll("button[data-page]"), function (b) {
       var p = +b.dataset.page, next = null;
       for (var i = 0; i < TOC.length; i++) { if (TOC[i][0] > p) { next = TOC[i][0]; break; } }
       b.classList.toggle("active", maxV >= p && (next === null || cp < next));
@@ -555,14 +578,24 @@
     c = Math.max(0, Math.min(maxCur(), c));
     var token = ++navToken;
     if (c === cur) { hideSpin(); return; }
-    if (single && !isReady(c + 1)) {           // never show a half-loaded page: wait for it
+    var need = pagesFor(c).filter(function (n) { return !isReady(n); });
+    if (need.length) {                         // never show a half-loaded page: wait for all of them
       showSpin(false);
       (function tryLoad() {
-        loadPage(c + 1, function (ok) {
-          if (token !== navToken) return;
-          if (!ok) { toast("اتصال ضعیف است؛ دوباره تلاش می‌کنیم…"); tryLoad(); return; }
-          hideSpin(); commit(c);
-        }, true);
+        var left = need.length, bad = false;
+        need.forEach(function (n) {
+          loadPage(n, function (ok) {
+            if (token !== navToken) return;
+            if (!ok) bad = true;
+            if (--left > 0) return;
+            if (bad) {
+              toast("اتصال ضعیف است؛ دوباره تلاش می‌کنیم…");
+              need = need.filter(function (m) { return !isReady(m); });
+              tryLoad(); return;
+            }
+            hideSpin(); commit(c);
+          }, true);
+        });
       })();
       return;
     }
@@ -588,13 +621,9 @@
     zoomEl.style.transform = "translate(" + panX + "px," + panY + "px) scale(" + zoom + ")";
     stage.classList.toggle("zoomed", zoom > 1);
     btnZoom.classList.toggle("on", zoom > 1);
-    if (single && built) {                        // sharper image while zoomed in
-      if (zoom > 1) fetchBlob(FILE(cur + 1), true, function () { refreshImages(); });
-      refreshImages();
-    }
   }
   function toggleZoom() {
-    zoom = zoom > 1 ? 1 : 2.2;
+    zoom = zoom > 1 ? 1 : 2;
     panX = panY = 0;
     applyZoom(false);
   }
@@ -662,6 +691,25 @@
     b.addEventListener("click", function () { goTo(it[0]); toc.classList.remove("open"); btnToc.classList.remove("on"); });
     toc.appendChild(b);
   });
+  var sepEl = document.createElement("div"); sepEl.className = "sep"; toc.appendChild(sepEl);
+  var bView = document.createElement("button");
+  function viewLabel() { bView.innerHTML = '<span class="num">▭</span><span class="t">' + (VIEW === "single" ? "نمایش دوصفحه‌ای (مثل کاتالوگ)" : "نمایش تک‌صفحه‌ای") + '</span>'; }
+  viewLabel();
+  bView.addEventListener("click", function () {
+    VIEW = VIEW === "single" ? "spread" : "single";
+    try { localStorage.setItem("mahfam_view", VIEW); } catch (e) {}
+    viewLabel(); toc.classList.remove("open"); btnToc.classList.remove("on");
+    layout();
+  });
+  toc.appendChild(bView);
+  var aPdf = document.createElement("a");
+  aPdf.className = "act"; aPdf.href = "mahfam-cataloue.pdf"; aPdf.setAttribute("download", "");
+  aPdf.innerHTML = '<span class="num" style="color:var(--gold);font-weight:600;min-width:1.8rem">↓</span><span class="t">دانلود نسخهٔ PDF</span>';
+  toc.appendChild(aPdf);
+  rot.addEventListener("click", function () {
+    try { sessionStorage.setItem("mahfam_rot", "1"); } catch (e) {}
+    rot.classList.remove("show");
+  });
   btnToc.addEventListener("click", function (e) {
     e.stopPropagation();
     var open = toc.classList.toggle("open");
@@ -680,14 +728,14 @@
   /* ---------- background prefetch: quietly download the rest on phones ---------- */
   var fetched = {}, bgActive = 0, started = false;
   function pump() {
-    if (!single || !started) return;
+    if (!started) return;
     if (fgActive > 0 || bgActive >= 1) return;                 // one quiet background download at a time
     var c = navigator.connection;
     if (c && c.saveData) return;                                // respect data saver
-    var best = 0, bd = 1e9, i;
+    var best = 0, bd = 1e9, i, vp = visiblePages(), vmin = vp[0], vmax = vp[vp.length - 1];
     for (i = 1; i <= TOTAL; i++) {
       if (fetched[i] || blobOf[SMALL(i)]) continue;
-      var d = (i - 1 >= cur ? (i - 1 - cur) : (cur - (i - 1)) * 3);   // pages ahead first
+      var d = i > vmax ? i - vmax : (i >= vmin ? 0 : (vmin - i) * 3);   // pages ahead first
       if (d < bd) { bd = d; best = i; }
     }
     if (!best) return;
@@ -717,7 +765,7 @@
   }
   function offlineUrls() {                           // relative URLs, same strings the loader uses
     var list = [];
-    for (var n = 1; n <= TOTAL; n++) list.push(single ? SMALL(n) : FILE(n));
+    for (var n = 1; n <= TOTAL; n++) list.push(SMALL(n));
     return list;
   }
   function setOffState(state, pct) {
@@ -777,10 +825,7 @@
 
   detectAvif(function (ok) {
     EXT = ok ? "avif" : "webp";
-    var r = stage.getBoundingClientRect();
-    var phone = (r.width < 820) || (r.width / r.height < 1.3);
     setTimeout(checkOffline, 600);
-    if (!phone) { layout(); return; }
     showSpin(true);                              // show the cover only when it is fully loaded
     (function first() {
       loadPage(1, function (ok) {
