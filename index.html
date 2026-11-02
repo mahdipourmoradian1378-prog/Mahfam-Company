@@ -5,14 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>کاتالوگ شرکت مهفام | Mahfam Company Catalogue</title>
 <meta name="description" content="کاتالوگ تعاملی شرکت مهفام؛ طراحی گرافیک، عکاسی و فیلم‌برداری">
-<meta name="theme-color" content="#0a1840">
+<meta name="theme-color" content="#0d1941">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=3">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="مهفام">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a1840'/%3E%3Cpath d='M16 46V18l16 16 16-16v28' fill='none' stroke='%23d9b660' stroke-width='5' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="favicon.ico?v=3" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=3">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=3">
 <style>
   @font-face { font-family: "Open Sans UI"; font-weight: 500; font-style: normal; font-display: swap;
     src: url("fonts/OpenSans-Medium.woff") format("woff"); }
@@ -24,23 +26,24 @@
   :root {
     --font-en-medium: "Open Sans UI", "Segoe UI", system-ui, sans-serif;   /* Open Sans Medium (500) / Light (300) */
     --font-fa: "Yekan Bakh UI", Vazirmatn, Tahoma, "Segoe UI", system-ui, sans-serif;
-    --navy: #0a1840;
-    --navy-deep: #050b1f;
-    --gold: #d9b660;
+    --navy: #0d1941;
+    --navy-deep: #0d1941;
+    --gold: #f3dd85;
     --ink: #eef1fa;
-    --panel: rgba(8, 20, 56, .97);
-    --line: rgba(217, 182, 96, .35);
+    --panel: rgba(13, 25, 65, .97);
+    --line: rgba(243, 221, 133, .35);
     --flip: .9s;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; margin: 0; }
+  html { background: var(--navy); }
   body {
     display: flex; flex-direction: column;
     height: 100dvh;
     font-family: var(--font-fa);          /* Persian text: Yekan Bakh */
     font-weight: 400;
     color: var(--ink);
-    background: radial-gradient(ellipse at 50% 40%, #12275f 0%, var(--navy) 45%, var(--navy-deep) 100%);
+    background: var(--navy);
     overflow: hidden;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -49,6 +52,7 @@
   header {
     flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
     gap: .6rem; height: 46px; font-size: .95rem; letter-spacing: .02em;
+    border-bottom: 1px solid var(--gold);          /* 1 px line, edge to edge */
   }
   header span { opacity: .7; font-family: var(--font-en-medium); font-weight: 300; direction: ltr; }
   header span b { font-weight: 500; }
@@ -86,7 +90,7 @@
   .face::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
   .face.front::after { background: linear-gradient(to left, rgba(0,0,0,.28), rgba(0,0,0,0) 9%); }
   .face.back::after  { background: linear-gradient(to right, rgba(0,0,0,.28), rgba(0,0,0,0) 9%); }
-  .face.blank { background: linear-gradient(135deg, #0d1d4d, var(--navy)); }
+  .face.blank { background: var(--navy); }
   body.single .face::after { display: none; }
   body.single .face { box-shadow: none; }
 
@@ -106,7 +110,7 @@
   body.single #book { perspective: none; }
 
   #spin { position: absolute; left: 50%; top: 50%; width: 38px; height: 38px; margin: -19px 0 0 -19px;
-    border: 3px solid rgba(217,182,96,.25); border-top-color: var(--gold); border-radius: 50%;
+    border: 3px solid rgba(243,221,133,.25); border-top-color: var(--gold); border-radius: 50%;
     animation: spin .8s linear infinite; display: none; z-index: 30; pointer-events: none; }
   #stage.busy #spin { display: block; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -124,7 +128,7 @@
   body.compact #toc { bottom: 52px; }
   #toc a.act { display: flex; width: 100%; align-items: center; gap: .7rem; padding: .6rem .7rem; border-radius: 12px;
     color: var(--ink); text-decoration: none; }
-  #toc a.act:hover { background: rgba(217,182,96,.18); }
+  #toc a.act:hover { background: rgba(243,221,133,.18); }
   #toc .sep { height: 1px; background: var(--line); margin: .4rem .3rem; }
 
   /* toolbar */
@@ -140,10 +144,10 @@
     font: inherit; font-family: var(--font-en-medium); font-weight: 500; font-size: .85rem; cursor: pointer; text-decoration: none;
     transition: background .2s, border-color .2s, opacity .2s;
   }
-  .btn:hover { background: rgba(217,182,96,.18); border-color: var(--gold); }
+  .btn:hover { background: rgba(243,221,133,.18); border-color: var(--gold); }
   .btn:disabled { opacity: .3; cursor: default; pointer-events: none; }
   .btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .btn.on { background: rgba(217,182,96,.25); border-color: var(--gold); }
+  .btn.on { background: rgba(243,221,133,.25); border-color: var(--gold); }
   #indicator { min-width: 92px; direction: ltr; text-align: center; font-size: .95rem; font-family: var(--font-en-medium); font-weight: 300; font-variant-numeric: tabular-nums; }
   .spacer { width: .4rem; }
 
@@ -161,7 +165,7 @@
     padding: .6rem .7rem; border: 0; border-radius: 12px; background: transparent;
     color: var(--ink); font: inherit; cursor: pointer;
   }
-  #toc button:hover, #toc button.active { background: rgba(217,182,96,.18); }
+  #toc button:hover, #toc button.active { background: rgba(243,221,133,.18); }
   #toc .num { color: var(--gold); font-family: var(--font-en-medium); font-weight: 500; min-width: 1.8rem; direction: ltr; text-align: center; }
   #toc .t { display: flex; flex-direction: column; line-height: 1.35; }
   #toc .t small { opacity: .6; direction: ltr; text-align: right; font-family: var(--font-en-medium); font-weight: 300; }
@@ -172,6 +176,11 @@
     font-size: .85rem; max-width: min(92vw, 380px); text-align: center; pointer-events: none; z-index: 60;
     transition: opacity .25s, transform .25s; }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  #welcome { position: fixed; inset: 0; z-index: 1000; background: var(--navy); display: flex;
+    align-items: center; justify-content: center; opacity: 1; transition: opacity 1s ease; cursor: pointer; }
+  #welcome.hide { opacity: 0; pointer-events: none; }
+  #welcome img { width: min(72vw, 560px); max-height: 62vh; height: auto; object-fit: contain; user-select: none; -webkit-user-drag: none; }
 
   noscript { position: absolute; inset: 0; display: grid; place-items: center; z-index: 50; background: var(--navy); }
   noscript a { color: var(--gold); }
@@ -200,6 +209,8 @@
 </style>
 </head>
 <body>
+
+<div id="welcome" aria-hidden="true"><img id="welcomeImg" src="welcome.png" alt="Mahfam Company" decoding="async"></div>
 
 <header><span><b>Mahfam</b> Company Profile</span></header>
 
@@ -782,6 +793,22 @@
     window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
   }
 
+  /* ---------- welcome splash: about 2 s, then a 1 s fade into the catalogue ---------- */
+  var splash = $("welcome"), splashImg = $("welcomeImg"), splashTimeUp = false, coverReady = false, splashGone = false;
+  function endSplash() {
+    if (splashGone) return; splashGone = true;
+    splash.classList.add("hide");
+    setTimeout(function () { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 1200);
+  }
+  function maybeEndSplash() { if (splashTimeUp && coverReady) endSplash(); }
+  function startSplashTimer() {
+    if (startSplashTimer.done) return; startSplashTimer.done = true;
+    setTimeout(function () { splashTimeUp = true; maybeEndSplash(); }, 2000);
+  }
+  if (splashImg.complete) startSplashTimer(); else { splashImg.onload = splashImg.onerror = startSplashTimer; setTimeout(startSplashTimer, 3500); }
+  setTimeout(endSplash, 15000);                       // safety: never block the catalogue longer than this
+  splash.addEventListener("click", endSplash);        // a tap skips the welcome screen
+
   function detectAvif(cb) {
     var t = new Image(), done = false;
     var fin = function (ok) { if (!done) { done = true; cb(ok); } };
@@ -798,6 +825,7 @@
       loadPage(1, function (ok) {
         if (!ok) { toast("اتصال ضعیف است؛ دوباره تلاش می‌کنیم…"); first(); return; }
         hideSpin(); layout(); startPrefetch();
+        coverReady = true; maybeEndSplash();
       }, true);
     })();
   });

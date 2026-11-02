@@ -6,7 +6,7 @@ const CACHE = "mahfam-v5";
 self.addEventListener("install", (e) => {
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(["./", "index.html", "manifest.webmanifest", "icon-192.png", "fonts/OpenSans-Medium.woff", "fonts/OpenSans-Light.woff", "fonts/YekanBakhFaNum-Regular.woff"])).catch(() => {})
+    caches.open(CACHE).then((c) => c.addAll(["./", "index.html", "manifest.webmanifest", "icon-192.png", "welcome.png", "favicon-32.png", "fonts/OpenSans-Medium.woff", "fonts/OpenSans-Light.woff", "fonts/YekanBakhFaNum-Regular.woff"])).catch(() => {})
   );
 });
 
