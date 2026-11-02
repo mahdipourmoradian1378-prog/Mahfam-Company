@@ -51,10 +51,10 @@
 
   header {
     flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
-    gap: .6rem; padding: 9px 0; font-size: .95rem; letter-spacing: .02em;
+    gap: .6rem; height: 65px; padding: 0; font-size: .95rem; letter-spacing: .02em;
     border-bottom: 1px solid var(--gold);          /* 1 px line, edge to edge */
   }
-  header img { width: min(280px, 70vw); height: auto; display: block; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+  header img { width: min(188px, 47vw); height: auto; display: block; user-select: none; -webkit-user-drag: none; pointer-events: none; }
   header span { opacity: .7; font-family: var(--font-en-medium); font-weight: 300; direction: ltr; }
   header span b { font-weight: 500; }
 
@@ -181,7 +181,7 @@
   #welcome { position: fixed; inset: 0; z-index: 1000; background: var(--navy); display: flex;
     align-items: center; justify-content: center; opacity: 1; transition: opacity 1s ease; cursor: pointer; }
   #welcome.hide { opacity: 0; pointer-events: none; }
-  #welcome img { width: min(72vw, 560px); max-height: 62vh; height: auto; object-fit: contain; user-select: none; -webkit-user-drag: none; }
+  #welcome img { width: min(48vw, 375px); max-height: 41vh; height: auto; object-fit: contain; user-select: none; -webkit-user-drag: none; }
 
   noscript { position: absolute; inset: 0; display: grid; place-items: center; z-index: 50; background: var(--navy); }
   noscript a { color: var(--gold); }
@@ -192,8 +192,8 @@
     .btn { padding: 0 .65rem; }
     #bar { gap: .35rem; }
     #indicator { min-width: 70px; font-size: .9rem; }
-    header { padding: 7px 0; }
-    header img { width: min(240px, 66vw); }
+    header { height: 54px; }
+    header img { width: min(160px, 44vw); }
   }
   body.desk .leaf { will-change: transform; }
 
