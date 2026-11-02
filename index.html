@@ -14,7 +14,16 @@
 <meta name="apple-mobile-web-app-title" content="مهفام">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a1840'/%3E%3Cpath d='M16 46V18l16 16 16-16v28' fill='none' stroke='%23d9b660' stroke-width='5' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
+  @font-face { font-family: "Open Sans UI"; font-weight: 500; font-style: normal; font-display: swap;
+    src: url("fonts/OpenSans-Medium.woff") format("woff"); }
+  @font-face { font-family: "Open Sans UI"; font-weight: 300; font-style: normal; font-display: swap;
+    src: url("fonts/OpenSans-Light.woff") format("woff"); }
+  @font-face { font-family: "Yekan Bakh UI"; font-weight: 400; font-style: normal; font-display: swap;
+    src: url("fonts/YekanBakhFaNum-Regular.woff") format("woff"); }
+
   :root {
+    --font-en-medium: "Open Sans UI", "Segoe UI", system-ui, sans-serif;   /* Open Sans Medium (500) / Light (300) */
+    --font-fa: "Yekan Bakh UI", Vazirmatn, Tahoma, "Segoe UI", system-ui, sans-serif;
     --navy: #0a1840;
     --navy-deep: #050b1f;
     --gold: #d9b660;
@@ -28,7 +37,8 @@
   body {
     display: flex; flex-direction: column;
     height: 100dvh;
-    font-family: Vazirmatn, Tahoma, "Segoe UI", system-ui, sans-serif;
+    font-family: var(--font-fa);          /* Persian text: Yekan Bakh */
+    font-weight: 400;
     color: var(--ink);
     background: radial-gradient(ellipse at 50% 40%, #12275f 0%, var(--navy) 45%, var(--navy-deep) 100%);
     overflow: hidden;
@@ -40,8 +50,8 @@
     flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
     gap: .6rem; height: 46px; font-size: .95rem; letter-spacing: .02em;
   }
-  header b { font-weight: 600; color: var(--gold); }
-  header span { opacity: .7; font-weight: 300; direction: ltr; }
+  header span { opacity: .7; font-family: var(--font-en-medium); font-weight: 300; direction: ltr; }
+  header span b { font-weight: 500; }
 
   #stage {
     position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden;
@@ -127,7 +137,7 @@
     height: 42px; min-width: 42px; padding: 0 .8rem;
     border: 1px solid var(--line); border-radius: 999px;
     background: rgba(255,255,255,.05); color: var(--ink);
-    font: inherit; font-size: .85rem; cursor: pointer; text-decoration: none;
+    font: inherit; font-family: var(--font-en-medium); font-weight: 500; font-size: .85rem; cursor: pointer; text-decoration: none;
     transition: background .2s, border-color .2s, opacity .2s;
   }
   .btn:hover { background: rgba(217,182,96,.18); border-color: var(--gold); }
@@ -152,10 +162,10 @@
     color: var(--ink); font: inherit; cursor: pointer;
   }
   #toc button:hover, #toc button.active { background: rgba(217,182,96,.18); }
-  #toc .num { color: var(--gold); font-weight: 600; min-width: 1.8rem; }
+  #toc .num { color: var(--gold); font-family: var(--font-en-medium); font-weight: 500; min-width: 1.8rem; direction: ltr; text-align: center; }
   #toc .t { display: flex; flex-direction: column; line-height: 1.35; }
-  #toc .t small { opacity: .6; direction: ltr; text-align: right; font-weight: 300; }
-  #toc .pg { margin-inline-start: auto; opacity: .5; font-size: .8rem; }
+  #toc .t small { opacity: .6; direction: ltr; text-align: right; font-family: var(--font-en-medium); font-weight: 300; }
+  #toc .pg { margin-inline-start: auto; opacity: .55; font-size: .8rem; font-family: var(--font-en-medium); font-weight: 300; direction: ltr; }
 
   #toast { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%) translateY(20px); opacity: 0;
     background: var(--panel); border: 1px solid var(--line); color: var(--ink); padding: .65rem 1rem; border-radius: 14px;
@@ -191,7 +201,7 @@
 </head>
 <body>
 
-<header><b>مهفام</b><span>Mahfam Company Profile</span></header>
+<header><span><b>Mahfam</b> Company Profile</span></header>
 
 <div id="stage" aria-label="کاتالوگ تعاملی">
   <div id="zoom"><div id="book"></div></div>
@@ -203,8 +213,8 @@
 <div id="toc" role="dialog" aria-label="فهرست مطالب"></div>
 
 <nav id="bar" aria-label="ابزار کاتالوگ">
-  <button class="btn" id="btnToc" aria-label="فهرست">
-    <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span class="lbl">فهرست</span>
+  <button class="btn" id="btnToc" aria-label="Menu">
+    <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span class="lbl">Menu</span>
   </button>
   <span class="spacer"></span>
   <!-- RTL: the first button sits on the right and goes back -->
@@ -694,9 +704,9 @@
   TOC.forEach(function (it) {
     var b = document.createElement("button");
     b.dataset.page = it[0];
-    b.innerHTML = '<span class="num">' + (it[3] ? it[3].replace(/\d/g, function (d) { return fa(d); }) : "•") + '</span>' +
+    b.innerHTML = '<span class="num">' + (it[3] || "•") + '</span>' +
                   '<span class="t">' + it[1] + '<small>' + it[2] + '</small></span>' +
-                  '<span class="pg">' + fa(it[0]) + '</span>';
+                  '<span class="pg">' + it[0] + '</span>';
     b.addEventListener("click", function () { goTo(it[0]); toc.classList.remove("open"); btnToc.classList.remove("on"); });
     toc.appendChild(b);
   });
