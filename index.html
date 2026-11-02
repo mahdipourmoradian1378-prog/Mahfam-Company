@@ -179,7 +179,7 @@
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   #welcome { position: fixed; inset: 0; z-index: 1000; background: var(--navy); display: flex;
-    align-items: center; justify-content: center; opacity: 1; transition: opacity 1s ease; cursor: pointer; }
+    align-items: center; justify-content: center; opacity: 1; transition: opacity 2s ease-in-out; cursor: pointer; }
   #welcome.hide { opacity: 0; pointer-events: none; }
   #welcome img { width: min(48vw, 375px); max-height: 41vh; height: auto; object-fit: contain; user-select: none; -webkit-user-drag: none; }
 
@@ -800,7 +800,7 @@
   function endSplash() {
     if (splashGone) return; splashGone = true;
     splash.classList.add("hide");
-    setTimeout(function () { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 1200);
+    setTimeout(function () { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 2200);
   }
   function maybeEndSplash() { if (splashTimeUp && coverReady) endSplash(); }
   function startSplashTimer() {
