@@ -51,9 +51,10 @@
 
   header {
     flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
-    gap: .6rem; height: 46px; font-size: .95rem; letter-spacing: .02em;
+    gap: .6rem; padding: 9px 0; font-size: .95rem; letter-spacing: .02em;
     border-bottom: 1px solid var(--gold);          /* 1 px line, edge to edge */
   }
+  header img { width: min(280px, 70vw); height: auto; display: block; user-select: none; -webkit-user-drag: none; pointer-events: none; }
   header span { opacity: .7; font-family: var(--font-en-medium); font-weight: 300; direction: ltr; }
   header span b { font-weight: 500; }
 
@@ -191,7 +192,8 @@
     .btn { padding: 0 .65rem; }
     #bar { gap: .35rem; }
     #indicator { min-width: 70px; font-size: .9rem; }
-    header { height: 38px; font-size: .85rem; }
+    header { padding: 7px 0; }
+    header img { width: min(240px, 66vw); }
   }
   body.desk .leaf { will-change: transform; }
 
@@ -212,7 +214,7 @@
 
 <div id="welcome" aria-hidden="true"><img id="welcomeImg" src="welcome.png" alt="Mahfam Company" decoding="async"></div>
 
-<header><span><b>Mahfam</b> Company Profile</span></header>
+<header><img src="header.png" alt="Mahfam Co - Graphic Design, Photography &amp; Videography" width="1000" height="163" decoding="async"></header>
 
 <div id="stage" aria-label="کاتالوگ تعاملی">
   <div id="zoom"><div id="book"></div></div>
