@@ -144,7 +144,7 @@
   .btn:disabled { opacity: .3; cursor: default; pointer-events: none; }
   .btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .btn.on { background: rgba(217,182,96,.25); border-color: var(--gold); }
-  #indicator { min-width: 92px; text-align: center; font-size: .95rem; font-variant-numeric: tabular-nums; }
+  #indicator { min-width: 92px; direction: ltr; text-align: center; font-size: .95rem; font-family: var(--font-en-medium); font-weight: 300; font-variant-numeric: tabular-nums; }
   .spacer { width: .4rem; }
 
   /* table of contents */
@@ -165,7 +165,7 @@
   #toc .num { color: var(--gold); font-family: var(--font-en-medium); font-weight: 500; min-width: 1.8rem; direction: ltr; text-align: center; }
   #toc .t { display: flex; flex-direction: column; line-height: 1.35; }
   #toc .t small { opacity: .6; direction: ltr; text-align: right; font-family: var(--font-en-medium); font-weight: 300; }
-  #toc .pg { margin-inline-start: auto; opacity: .55; font-size: .8rem; font-family: var(--font-en-medium); font-weight: 300; direction: ltr; }
+  #toc .pg { margin-right: auto; margin-left: 0; opacity: .55; font-size: .8rem; font-family: var(--font-en-medium); font-weight: 300; }
 
   #toast { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%) translateY(20px); opacity: 0;
     background: var(--panel); border: 1px solid var(--line); color: var(--ink); padding: .65rem 1rem; border-radius: 14px;
@@ -219,7 +219,7 @@
   <span class="spacer"></span>
   <!-- RTL: the first button sits on the right and goes back -->
   <button class="btn" id="btnPrev" aria-label="صفحه قبل"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
-  <div id="indicator" aria-live="polite">۱ / ۴۲</div>
+  <div id="indicator" aria-live="polite">1 / 42</div>
   <button class="btn" id="btnNext" aria-label="صفحه بعد"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
   <span class="spacer"></span>
   <button class="btn" id="btnZoom" aria-label="بزرگ‌نمایی"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M11 8v6M8 11h6"/></svg></button>
@@ -288,7 +288,7 @@
   var EXT = "webp";
   var AVIF_PROBE = "data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADrbWV0YQAAAAAAAAAhaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAAAAAAAOcGl0bQAAAAAAAQAAAB5pbG9jAAAAAEQAAAEAAQAAAAEAAAETAAAAGAAAAChpaW5mAAAAAAABAAAAGmluZmUCAAAAAAEAAGF2MDFDb2xvcgAAAABqaXBycAAAAEtpcGNvAAAAFGlzcGUAAAAAAAAAAgAAAAIAAAAQcGl4aQAAAAADCAgIAAAADGF2MUOBAAwAAAAAE2NvbHJuY2x4AAEADQAGgAAAABdpcG1hAAAAAAAAAAEAAQQBAoMEAAAAIG1kYXQSAAoFGAA2BCAyDRsAGmmmhAAAsBNWXIw=";
   var SMALL = function (n) { return "pages-42/p-" + (n < 10 ? "0" + n : n) + "." + EXT; };   // sharp 1200 px pages
-  var CACHE_NAME = "mahfam-v4";                      // keep identical to the name in sw.js
+  var CACHE_NAME = "mahfam-v5";                      // keep identical to the name in sw.js
   var blobOf = {}, jobs = {}, fgActive = 0;
   var MIME = { avif: "image/avif", webp: "image/webp", jpg: "image/jpeg" };
   function mimeOf(u) { return MIME[(u.split(".").pop() || "").toLowerCase()] || "application/octet-stream"; }
@@ -574,8 +574,8 @@
   function updateUI() {
     var v = visiblePages();
     indicator.textContent = v.length === 2
-      ? fa(v[0]) + "–" + fa(v[1]) + " / " + fa(TOTAL)
-      : fa(v[0]) + " / " + fa(TOTAL);
+      ? v[0] + "–" + v[1] + " / " + TOTAL
+      : v[0] + " / " + TOTAL;
     btnPrev.disabled = cur <= 0;
     btnNext.disabled = cur >= maxCur();
     var cp = v[0], maxV = v[v.length - 1];

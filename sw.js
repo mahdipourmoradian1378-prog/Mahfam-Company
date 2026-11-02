@@ -1,7 +1,7 @@
 /* Mahfam catalogue – offline support.
    If you ever replace the page images, change the version below (e.g. v3) here AND in index.html (CACHE_NAME)
    so phones fetch the new ones. */
-const CACHE = "mahfam-v4";
+const CACHE = "mahfam-v5";
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
